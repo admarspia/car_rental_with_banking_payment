@@ -99,7 +99,56 @@ class BankSystem {
 
  
 
- /*BEREKET*/
+//BEREKET
+ void changePassword(){
+    try {
+   std::string opassword;
+   std::string npassword;
+   std::string hashed;
+   int affectedRows;
+   int account;
+   double balance;
+
+   std::cout<< "Enter your account number: ";
+   std::cin>>account;
+   std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+   std::cout <<"Enter Password : ";
+   std::getline(std::cin,opassword);
+   
+   std::unique_ptr<PreparedStatement> pstmt(conn->prepareStatement("SELECT password FROM users WHERE acount_number = ? "));
+   pstmt->setInt(1,account);
+   
+   std::unique_ptr<ResultSet> res(pstmt->executeQuery());
+   
+   if (res->next()){
+    hashed = res->getString("password");
+   }else{
+    std::cout<< "Account  Not Found!\n";
+    return ;
+   }
+   
+   if (!validatePassword(hashed,opassword)) { 
+    std::cout<< "Incorrect Password!" <<std::endl;
+    return ;
+   }
+   std::cout <<"Enter New Password : ";
+   std::getline(std::cin,npassword);
+   
+   
+   std::string newhash = hashPassword(npassword);
+   
+   pstmt.reset(conn->prepareStatement("Update users SET password = ? WHERE acount_number = ?"));
+
+   pstmt->setString(1,newhash);
+   pstmt->setInt(2,account);
+   
+   affectedRows = pstmt->executeUpdate();
+   std::cout<< (affectedRows !=0? "password changed!\n":"Something went Wrong!\n");
+    
+  } catch (SQLException & e){
+     std::cout<< "Error: " <<  e.what() << std::endl;
+  } 
+ }
 
 
  /*DAGMAWI*/
