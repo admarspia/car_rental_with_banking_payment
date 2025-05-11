@@ -36,71 +36,54 @@ class System {
 
   /*AHADU*/
 
-/*ASTER*/
+void addUser(){
+  try {
+ 
+   std::string name;
+   std::string email;
+   std::string phone;
+   double bill;
+   bool rentedcar;
+   std::string address;
   
   
-//BEREKET
-  int rentCar(){
-   try {
-    std::string name;
-    std::string email;
-    std::string made;
-    std::string model;
-    int affectedRows;
-    int year;
-     
-    std::cout << "\nEnter your name: ";
-    std::getline(std::cin,name);
-    std::cout << "\nEnter your email: ";
+   std::cout << "\nEnter your name: ";
+   std::getline(std::cin,name);
+   std::cout << "\nEnter your email: ";
+   std::getline(std::cin, email);
+   while (!validateEmail(email)){
+    std::cout<< "Your Email is not valid. please try again!: ";
     std::getline(std::cin, email);
-    std::cout << "\nEnter Car Brand: ";
-    std::getline(std::cin, made);
-    std::cout << "\nEnter The Model of the the Car " << made << ": ";
-    std::getline(std::cin, model);
-    std::cout << "\nEnter manufacture Year For car " << made << " " << model << ": " ;
-    std::cin>> year;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
-    
-    std::unique_ptr<PreparedStatement> pstmt(conn->prepareStatement("SELECT id FROM Customers WHERE name= ? AND email = ? "));
-    pstmt->setString(1,name);
-    pstmt-> setString(2,email);
-    std::unique_ptr<ResultSet> res (pstmt->executeQuery());
-    int userId;
-    
-    if (res->next()){
-     userId = res->getInt("id");
-     } else {
-     std::cout << "\nNo User With a given username and email. Please goto registration page.\n";
-     return 0;
     }
    
-    pstmt.reset(conn->prepareStatement("SELECT id FROM Cars WHERE made = ? AND model = ? AND year = ? AND isAvaileble = 1"));
-    pstmt->setString(1,made);
-    pstmt->setString(2,model);
-    pstmt->setInt(3,year);
-    res.reset(pstmt->executeQuery());
-    int carId;
-    
-    if (res->next()){
-     carId = res->getInt("id");
-    }else{
-    std::cout << "The car with the given atributes doesnt exist please check out list of available cars!\n" <<std::endl;
-    affectedRows =0;
-    return 0;
-    
-    }
+   
+   std::cout << "\nEnter your phone number: ";
+   std::getline(std::cin, phone);
+   while (phone.length() != 10){
+    std:: cout << "phone must be length of  10" << std::endl;
+    std::getline(std::cin, phone);
+   }
+   
+   std::cout<< "\nEnter an Address.";
+   std::getline(std::cin, address);
   
-   pstmt.reset(conn->prepareStatement("UPDATE Cars SET rentedBy = ? ,rental_date = CURRENT_TIMESTAMP ,isAvaileble = 0 WHERE id = ?"));
-   pstmt->setInt(1,userId);
-   pstmt->setInt(2,carId);
-   affectedRows = pstmt->executeUpdate();
-   std::cout << (affectedRows > 0? "You have successfuly rented the car !\n" : "Someting goes wrong while updateing the car date!\n"); 
-   }catch (SQLException &e){
-   std::cout << "Error: " << e.what() << std::endl;
-  } 
-  return 0;
-  
+   std::unique_ptr<PreparedStatement> pstmt (conn->prepareStatement("INSERT INTO Customers (name,email,phone,address) VALUES (?,?,?,?)"));
+   pstmt->setString(1,name);
+   pstmt->setString(2,email);
+   
+   pstmt->setString(3,phone);
+   pstmt->setString(4,address);
+   int affectedRows = pstmt->executeUpdate(); 
+   std::cout << (affectedRows > 0? "User added Successfuly!\n" : "Something went wrong. User Not added!\n");
+   }
+   
+   catch(SQLException & e ){
+    std::cout<<"Error: " << e.what() <<std::endl;
+   }
   }
+  
+  
+  /*BEREKET*/
   
  /*DAGMAWI*/
 
