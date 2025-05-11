@@ -152,6 +152,71 @@ class BankSystem {
 
 
  /*DAGMAWI*/
+ int payothers(double amount){
+   try {
+   int accofsender;
+   double senderbalance;
+
+   int affectedRows;
+   std::string hashed;
+   std::string password;
+   
+   std::cout<< "Enter your account number: ";
+   std::cin>>accofsender;
+   std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+ 
+   std::cout <<"Enter Password : ";
+   std::getline(std::cin,password);
+   
+   std::unique_ptr<PreparedStatement> pstmt(conn->prepareStatement("SELECT password, balance FROM users WHERE acount_number= ? "));
+   pstmt->setInt(1,accofsender);
+   
+   std::unique_ptr<ResultSet> res(pstmt->executeQuery());
+
+   if  (res->next()){
+    senderbalance = res->getDouble("balance");
+    hashed = res->getString("password");
+   }
+   
+   if (!validatePassword(hashed,password)) { 
+    std::cout<< "Incorrect Password!" <<std::endl;
+    return 0;
+   }
+
+   std::cout << senderbalance  << "  " << amount;
+   if (senderbalance >= amount){
+    senderbalance -= amount;
+
+   }else {
+    std::cout << "inseficent balance!.\n";
+    return 0;
+   }
+  
+   pstmt.reset(conn->prepareStatement("UPDATE users SET balance = ? WHERE  acount_number = ?"));
+   pstmt->setDouble(1,senderbalance);
+   pstmt->setInt(2,accofsender);
+   affectedRows = pstmt->executeUpdate();
+   
+   if (affectedRows != 0){
+   pstmt.reset(conn->prepareStatement("INSERT INTO Transaction (user_id,transaction_type,amount) VALUES(?,?,?)"));
+   pstmt->setInt(1,accofsender);
+   pstmt->setString(2,"payed");
+   pstmt->setDouble(3,amount);
+   affectedRows = pstmt->executeUpdate();
+
+   
+   std::cout<< (affectedRows !=0? "Done!.\n":"Something went Wrong! recording the transaction.\n") ;
+   std::cout << "Paymet  Succeeded!.\n";
+   } else {
+       std::cout<< "Something went Wrong!.\n" ;
+   }
+  
+  } catch (SQLException & e){
+     std::cout<< "Error: " <<  e.what() << std::endl;
+  } 
+ 
+ return 0;
+ }
 
 };
 
