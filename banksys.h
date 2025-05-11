@@ -95,7 +95,50 @@ class BankSystem {
 
  
 
- /*ASTER*/
+ 
+ int showbalance(){
+  try {
+   std::string firstname;
+   std::string lastname;
+   std::string hashed;
+   std::string password;
+   int account;
+   double balance;
+
+   std::cout<< "Enter your account number: ";
+   std::cin>>account;
+   std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+   std::cout <<"Enter Password : ";
+   std::getline(std::cin,password);
+   
+   std::unique_ptr<PreparedStatement> pstmt(conn->prepareStatement("SELECT * FROM users WHERE acount_number = ? "));
+   pstmt->setInt(1,account);
+   
+   std::unique_ptr<ResultSet> res(pstmt->executeQuery());
+   if (res->next()){
+    balance  = res->getDouble("balance");
+    firstname = res->getString("firstname");
+    lastname = res->getString("lastname");
+    hashed = res->getString("password");
+   }else{
+    std::cout<< "Account  Not Found!\n";
+    return 0;
+   }
+   
+   if (!validatePassword(hashed,password)) { 
+    std::cout<< "Incorrect Password!" <<std::endl;
+    return 0;
+   }
+   
+   std::cout<<'\n'<<std::left;
+   std::cout<< std::setw(30)<< "First Name" << std::setw(30)<< "Last Name" << std::setw(30)<< "Account Number" << std::setw(30)<< "Current Balance"<< std::endl;
+   std::cout<< std::setw(30)<< firstname << std::setw(30)<< lastname << std::setw(30)<< account << std::setw(30)<< balance << std::endl;
+   
+  } catch (SQLException & e){
+     std::cout<< "Error: " <<  e.what() << std::endl;
+  } 
+   return 0;  
+ }
 
  
 
