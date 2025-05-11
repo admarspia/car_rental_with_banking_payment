@@ -35,6 +35,31 @@ class System {
 /*ABENEZER*/
 
   /*AHADU*/
+  void availebleCars(){
+   try {
+   std::unique_ptr<PreparedStatement> pstmt (conn->prepareStatement("SELECT * FROM Cars WHERE isAvaileble = 1 "));
+   std::unique_ptr<ResultSet> res(pstmt->executeQuery());
+   std::cout << std::left;
+   std::cout << std::setw(35) << "Brand" << std::setw(35) << "Model" << std::setw(10)  << "Year"  << std::endl;
+    while (res->next()){
+    std::cout << std::left;
+    std::cout << std::setw(35) << res->getString("made")  << std::setw(35) << res->getString("model") << std::setw(10) << res->getInt("year") << std::endl; 
+    }
+   
+  } catch (SQLException & e) {
+   std::cout << "ERROR: " << e.what() << std::endl;
+  }
+   
+  }
+  
+  //helper function for validation and error logging
+  bool validateEmail(std::string email){
+   std::regex pattern(R"(^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,7}$)");
+   bool isMatch;
+   isMatch  = std::regex_match(email,pattern);
+   return isMatch;
+  }
+
 
 void addUser(){
   try {
@@ -86,7 +111,6 @@ void addUser(){
   /*BEREKET*/
   
  /*DAGMAWI*/
-
  int payWithBank(){
  try{
   BankSystem  bs;
