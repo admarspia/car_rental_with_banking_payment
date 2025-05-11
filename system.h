@@ -32,7 +32,36 @@ class System {
  }
 
  
-/*ABENEZER*/
+//ABENEZER
+  void addCars(){
+   try{
+    std::string made;
+    std::string model;
+    int year;
+    double paymentpersecond;
+    
+    std::cout << "\nEnter car Made: ";
+    std::getline(std::cin,made);
+    std::cout << "\nEnter car Model: ";
+    std::getline(std::cin, model);
+    std::cout<< "\nEnter manu Year  for the car.";
+    std::cin>> year;
+    std::cout<< "\nEnter paymentpersecond.";
+    std::cin>>paymentpersecond;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+    
+    std::unique_ptr<PreparedStatement> pstmt (conn->prepareStatement("INSERT INTO Cars (made, model, year,paymentpersecond) VALUES (?,?,?,?)"));
+    pstmt->setString(1,made);
+    pstmt->setString(2,model);
+    pstmt->setInt(3,year);
+    pstmt->setDouble(4,paymentpersecond);
+    int affectedRows = pstmt->executeUpdate();
+    std::cout << (affectedRows > 0? "Car added successffuly!\n" : "Someting went wrong while adding the car!\n"); 
+   }catch (SQLException & e){
+    std::cout << "Error: " << e.what() << std::endl;
+   }
+ }
+
 
   /*AHADU*/
 
