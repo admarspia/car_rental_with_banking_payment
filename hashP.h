@@ -2,7 +2,6 @@
 #define PARSECONFIG
 #include <iostream>
 #include <string>
-#include <map>
 #include <fstream>
 #include <sodium.h>
 
