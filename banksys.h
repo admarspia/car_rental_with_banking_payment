@@ -88,6 +88,71 @@ class BankSystem {
  }
  
  /*AHADU*/
+ int deposite() {
+  try {
+   std::string firstname;
+   std::string lastname;
+   std::string hashed;
+   std::string password;
+   std::string transaction_type = "deposited";
+   double balance;
+   int account_number ;
+   int affectedRows;
+   int depositting;
+   
+   std::cout<< "Enter your first name. ";
+   std::getline(std::cin,firstname);
+   std::cout << "Enter your password. ";
+   std::getline(std::cin, password);
+   std::cout<< "Enter your account number: ";
+   std::cin>>account_number;
+   std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+   
+   std::unique_ptr<PreparedStatement> pstmt(conn->prepareStatement("SELECT balance,password FROM users WHERE acount_number = ? "));
+   pstmt->setInt(1,account_number);
+   
+   
+   std::unique_ptr<ResultSet> res(pstmt->executeQuery());
+   if (res->next()){
+    balance = res->getDouble("balance");
+    hashed = res->getString("password");
+    if (validatePassword(hashed,password)){
+    std::cout<< "Enter the amount to deposite. ";
+    std::cin >> depositting;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+    balance += depositting;
+    }else {
+    std::cout <<"Incorrect Password!"<< std::endl;
+    return 0;
+
+    }
+   }else{
+    std::cout<< "account not found!" << std::endl;
+    return 0;
+   }
+
+   pstmt.reset(conn->prepareStatement("UPDATE users SET balance = ? WHERE  acount_number = ?"));
+   pstmt->setDouble(1,balance);
+   pstmt->setInt(2,account_number);
+   affectedRows = pstmt->executeUpdate();
+   if (affectedRows != 0){
+   pstmt.reset(conn->prepareStatement("INSERT INTO Transaction (user_id,transaction_type,amount) VALUES(?,?,?)"));
+   pstmt->setInt(1,account_number);
+   pstmt->setString(2,transaction_type);
+   pstmt->setDouble(3,depositting);
+   affectedRows = pstmt->executeUpdate();
+   std::cout<< (affectedRows !=0? "Done!\n":"Something went Wrong! recording the transaction.\n") ;
+   std::cout << "Depositing Succeeded!\n";
+   } else {
+       std::cout<< "Something went Wrong!\n" ;
+   }
+  
+  } catch (SQLException & e){
+     std::cout<< "Error: " <<  e.what() << std::endl;
+  } 
+  return 0;
+  
+ }
 
  
 
