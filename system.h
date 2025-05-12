@@ -59,8 +59,65 @@ class System {
    }
  }
  
+
 /*ABENEZER*/
+//ABENEZER
+  void addCars(){
+   try{
+    std::string made;
+    std::string model;
+    int year;
+    double paymentpersecond;
+    
+    std::cout << "\nEnter car Made: ";
+    std::getline(std::cin,made);
+    std::cout << "\nEnter car Model: ";
+    std::getline(std::cin, model);
+    std::cout<< "\nEnter manu Year  for the car.";
+    std::cin>> year;
+    std::cout<< "\nEnter paymentpersecond.";
+    std::cin>>paymentpersecond;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+    
+    std::unique_ptr<PreparedStatement> pstmt (conn->prepareStatement("INSERT INTO Cars (made, model, year,paymentpersecond) VALUES (?,?,?,?)"));
+    pstmt->setString(1,made);
+    pstmt->setString(2,model);
+    pstmt->setInt(3,year);
+    pstmt->setDouble(4,paymentpersecond);
+    int affectedRows = pstmt->executeUpdate();
+    std::cout << (affectedRows > 0? "Car added successffuly!\n" : "Someting went wrong while adding the car!\n"); 
+   }catch (SQLException & e){
+    std::cout << "Error: " << e.what() << std::endl;
+   }
+ }
+
+
   /*AHADU*/
+  void availebleCars(){
+   try {
+   std::unique_ptr<PreparedStatement> pstmt (conn->prepareStatement("SELECT * FROM Cars WHERE isAvaileble = 1 "));
+   std::unique_ptr<ResultSet> res(pstmt->executeQuery());
+   std::cout << std::left;
+   std::cout << std::setw(35) << "Brand" << std::setw(35) << "Model" << std::setw(10)  << "Year"  << std::endl;
+    while (res->next()){
+    std::cout << std::left;
+    std::cout << std::setw(35) << res->getString("made")  << std::setw(35) << res->getString("model") << std::setw(10) << res->getInt("year") << std::endl; 
+    }
+   
+  } catch (SQLException & e) {
+   std::cout << "ERROR: " << e.what() << std::endl;
+  }
+   
+  }
+  
+  //helper function for validation and error logging
+  bool validateEmail(std::string email){
+   std::regex pattern(R"(^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,7}$)");
+   bool isMatch;
+   isMatch  = std::regex_match(email,pattern);
+   return isMatch;
+  }
+
 
 void addUser(){
   try {
@@ -112,6 +169,204 @@ void addUser(){
   /*BEREKET*/
   
  /*DAGMAWI*/
+
+ int returnCar(){
+   try {
+    std::string name;
+    std::string email;
+    std::string made;
+    std::string model;
+    int selectedCarId;
+    int duration;
+    int affectedRows;
+    int year;
+    int userId;
+    int rentedCarsByUser;
+    double paymentpersecond;
+    double bill;
+
+
+     
+    std::cout << "\nEnter your name: ";
+    std::getline(std::cin,name);
+    std::cout << "\nEnter your email: ";
+    std::getline(std::cin, email);
+    
+    std::unique_ptr<PreparedStatement> pstmt(conn->prepareStatement("SELECT id,bill FROM Customers WHERE name= ? AND email = ? "));
+    pstmt->setString(1,name);
+    pstmt-> setString(2,email);
+    std::unique_ptr<ResultSet> res (pstmt->executeQuery());
+    
+    if (res->next()){
+     userId = res->getInt("id");
+     bill = res->getDouble("bill");
+     } else {
+     std::cout << "\nNo User With a given username and email. Please goto registration page.\n";
+     return 0;
+    }
+    pstmt.reset(conn->prepareStatement("SELECT COUNT(*) FROM Cars WHERE rentedby = ?"));
+    pstmt->setInt(1,userId);
+    res.reset(pstmt->executeQuery());
+    if (res->next()){
+     rentedCarsByUser = res->getInt(1);
+    } else {
+     std::cout << "\nNo Cars rented by a user!" << std::endl;
+     return 0;
+    }
+    
+    if (rentedCarsByUser > 1){
+     std::cout << "\nEnter The Model of the the Car you want to return";
+     std::getline(std::cin, model);
+     std::cout << "\nEnter manufacture Year For car " << model << ": " ;
+     std::cin>> year;
+     std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+     
+     pstmt.reset(conn->prepareStatement("SELECT id,paymentpersecond FROM Cars WHERE model = ? AND year = ?"));
+     pstmt->setString(1,model);
+     pstmt->setInt(2,year);
+     res.reset(pstmt->executeQuery());
+     if (res->next()){
+      selectedCarId = res->getInt("id");
+      paymentpersecond = res->getDouble("paymentpersecond");
+     }else{
+      std::cout << "\nNo car with this model and year Rented by a user." << std::endl;
+      return 0;
+     }
+
+     pstmt.reset(conn->prepareStatement("SELECT TIMESTAMPDIFF(SECOND, rental_date,CURRENT_TIMESTAMP) FROM Cars WHERE id = ?"));
+     pstmt->setInt(1,selectedCarId);
+     res.reset(pstmt->executeQuery());
+     if (res->next()){
+      duration = res->getDouble(1);
+     }else {
+      std::cout << "Something goes wrong wile calculating the bill\n" << std::endl; 
+     }
+     bill  += duration * paymentpersecond;
+     
+     pstmt.reset(conn->prepareStatement("UPDATE Customers SET bill = ? WHERE id = ?"));
+     pstmt->setDouble(1,bill);
+     pstmt->setInt(2,userId);
+     pstmt->executeUpdate();
+     
+     pstmt.reset(conn->prepareStatement("UPDATE Cars SET rentedBy = NULL ,rental_date = NULL ,isAvaileble = 1 WHERE id = ?"));
+     pstmt->setInt(1,selectedCarId);
+     affectedRows = pstmt->executeUpdate();
+     std::cout << (affectedRows> 0? "\nYou have returned the car Successfuly!\n": "\nSomething gose rong while returnig the car please try Again letter.\n");
+     }else if  (rentedCarsByUser == 1){
+     
+     pstmt.reset(conn->prepareStatement("SELECT id,paymentpersecond FROM Cars WHERE  rentedby = ?"));
+     pstmt->setInt(1,userId);
+     res.reset(pstmt->executeQuery());
+     if (res->next()){
+      selectedCarId = res->getInt("id");
+      paymentpersecond = res->getDouble("paymentpersecond");
+     }
+
+     
+    std::cout << "\nEnter your name: ";
+    std::getline(std::cin,name);
+    std::cout << "\nEnter your email: ";
+    std::getline(std::cin, email);
+    
+    std::unique_ptr<PreparedStatement> pstmt(conn->prepareStatement("SELECT id,bill FROM Customers WHERE name= ? AND email = ? "));
+    pstmt->setString(1,name);
+    pstmt-> setString(2,email);
+    std::unique_ptr<ResultSet> res (pstmt->executeQuery());
+    
+    if (res->next()){
+     userId = res->getInt("id");
+     bill = res->getDouble("bill");
+     } else {
+     std::cout << "\nNo User With a given username and email. Please goto registration page.\n";
+     return 0;
+    }
+    pstmt.reset(conn->prepareStatement("SELECT COUNT(*) FROM Cars WHERE rentedby = ?"));
+    pstmt->setInt(1,userId);
+    res.reset(pstmt->executeQuery());
+    if (res->next()){
+     rentedCarsByUser = res->getInt(1);
+    } else {
+     std::cout << "\nNo Cars rented by a user!" << std::endl;
+     return 0;
+    }
+    
+    if (rentedCarsByUser > 1){
+     std::cout << "\nEnter The Model of the the Car you want to return";
+     std::getline(std::cin, model);
+     std::cout << "\nEnter manufacture Year For car " << model << ": " ;
+     std::cin>> year;
+     std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+     
+     pstmt.reset(conn->prepareStatement("SELECT id,paymentpersecond FROM Cars WHERE model = ? AND year = ?"));
+     pstmt->setString(1,model);
+     pstmt->setInt(2,year);
+     res.reset(pstmt->executeQuery());
+     if (res->next()){
+      selectedCarId = res->getInt("id");
+      paymentpersecond = res->getDouble("paymentpersecond");
+     }else{
+      std::cout << "\nNo car with this model and year Rented by a user." << std::endl;
+      return 0;
+     }
+
+     pstmt.reset(conn->prepareStatement("SELECT TIMESTAMPDIFF(SECOND, rental_date,CURRENT_TIMESTAMP) FROM Cars WHERE id = ?"));
+     pstmt->setInt(1,selectedCarId);
+     res.reset(pstmt->executeQuery());
+     if (res->next()){
+      duration = res->getDouble(1);
+     }else {
+      std::cout << "Something goes wrong wile calculating the bill\n" << std::endl; 
+     }
+     bill  += duration * paymentpersecond;
+     
+     pstmt.reset(conn->prepareStatement("UPDATE Customers SET bill = ? WHERE id = ?"));
+     pstmt->setDouble(1,bill);
+     pstmt->setInt(2,userId);
+     pstmt->executeUpdate();
+     
+     pstmt.reset(conn->prepareStatement("UPDATE Cars SET rentedBy = NULL ,rental_date = NULL ,isAvaileble = 1 WHERE id = ?"));
+     pstmt->setInt(1,selectedCarId);
+     affectedRows = pstmt->executeUpdate();
+     std::cout << (affectedRows> 0? "\nYou have returned the car Successfuly!\n": "\nSomething gose rong while returnig the car please try Again letter.\n");
+     }else if  (rentedCarsByUser == 1){
+     
+     pstmt.reset(conn->prepareStatement("SELECT id,paymentpersecond FROM Cars WHERE  rentedby = ?"));
+     pstmt->setInt(1,userId);
+     res.reset(pstmt->executeQuery());
+     if (res->next()){
+      selectedCarId = res->getInt("id");
+      paymentpersecond = res->getDouble("paymentpersecond");
+     }
+pstmt.reset(conn->prepareStatement("SELECT TIMESTAMPDIFF(SECOND, rental_date,CURRENT_TIMESTAMP) FROM Cars WHERE id = ?"));
+     pstmt->setInt(1,selectedCarId);
+     res.reset(pstmt->executeQuery());
+     if (res->next()){
+      duration = res->getInt(1);
+     }else {
+      std::cout << "\nSomething goes wrong wile calculating the bill\n" << std::endl; 
+     }
+     bill  += duration * paymentpersecond;
+     
+     pstmt.reset(conn->prepareStatement("UPDATE Customers SET bill = ? WHERE id = ?"));
+     pstmt->setDouble(1,bill);
+     pstmt->setInt(2,userId);
+     pstmt->executeUpdate();
+     
+     pstmt.reset(conn->prepareStatement("UPDATE Cars SET rentedBy = NULL ,rental_date = NULL ,isAvaileble = 1 WHERE id = ?"));
+     pstmt->setInt(1,selectedCarId);
+     affectedRows = pstmt->executeUpdate();
+
+     std::cout << (affectedRows> 0? "\nYou have returned the car Successfuly!\n": "\nSomething went wrong while returnig the car please try Again letter.\n");
+    
+     }else {
+     std::cout << "\nNo cars rented by a user.\n" << std::endl;
+     }
+   
+   }catch (SQLException &e){
+    std::cout << "Error: " << e.what() <<std::endl;
+   }
+   return 0;
+ }
 
  int payWithBank(){
  try{
