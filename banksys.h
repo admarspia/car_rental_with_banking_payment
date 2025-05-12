@@ -302,14 +302,10 @@ class BankSystem {
   } 
    return 0;  
  }
-
- 
-
-//BEREKET
- void changePassword(){
+void changePassword(){
     try {
-   std::string opassword;
-   std::string npassword;
+   std::string oldpassword;
+   std::string newpassword;
    std::string hashed;
    int affectedRows;
    int account;
@@ -318,42 +314,42 @@ class BankSystem {
    std::cout<< "Enter your account number: ";
    std::cin>>account;
    std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
-   std::cout <<"Enter Password : ";
-   std::getline(std::cin,opassword);
-   
+   std::cout <<"Enter old Password : ";
+   std::getline(std::cin,oldpassword);
+
    std::unique_ptr<PreparedStatement> pstmt(conn->prepareStatement("SELECT password FROM users WHERE acount_number = ? "));
    pstmt->setInt(1,account);
-   
+
    std::unique_ptr<ResultSet> res(pstmt->executeQuery());
-   
+
    if (res->next()){
     hashed = res->getString("password");
    }else{
-    std::cout<< "Account  Not Found!\n";
+    std::cout<< "Account Not Found!\n";
     return ;
    }
-   
-   if (!validatePassword(hashed,opassword)) { 
+
+   if (!validatePassword(hashed,oldpassword)) {
     std::cout<< "Incorrect Password!" <<std::endl;
     return ;
    }
    std::cout <<"Enter New Password : ";
-   std::getline(std::cin,npassword);
-   
-   
-   std::string newhash = hashPassword(npassword);
-   
+   std::getline(std::cin,newpassword);
+
+
+   std::string newhash = hashPassword(newpassword);
+
    pstmt.reset(conn->prepareStatement("Update users SET password = ? WHERE acount_number = ?"));
 
    pstmt->setString(1,newhash);
    pstmt->setInt(2,account);
-   
+
    affectedRows = pstmt->executeUpdate();
    std::cout<< (affectedRows !=0? "password changed!\n":"Something went Wrong!\n");
-    
+
   } catch (SQLException & e){
      std::cout<< "Error: " <<  e.what() << std::endl;
-  } 
+  }
  }
 
 
@@ -366,25 +362,25 @@ class BankSystem {
    int affectedRows;
    std::string hashed;
    std::string password;
-   
+
    std::cout<< "Enter your account number: ";
    std::cin>>accofsender;
    std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
- 
+
    std::cout <<"Enter Password : ";
    std::getline(std::cin,password);
-   
+
    std::unique_ptr<PreparedStatement> pstmt(conn->prepareStatement("SELECT password, balance FROM users WHERE acount_number= ? "));
    pstmt->setInt(1,accofsender);
-   
+
    std::unique_ptr<ResultSet> res(pstmt->executeQuery());
 
    if  (res->next()){
     senderbalance = res->getDouble("balance");
     hashed = res->getString("password");
    }
-   
-   if (!validatePassword(hashed,password)) { 
+
+   if (!validatePassword(hashed,password)) {
     std::cout<< "Incorrect Password!" <<std::endl;
     return 0;
    }
@@ -397,12 +393,12 @@ class BankSystem {
     std::cout << "inseficent balance!.\n";
     return 0;
    }
-  
+
    pstmt.reset(conn->prepareStatement("UPDATE users SET balance = ? WHERE  acount_number = ?"));
    pstmt->setDouble(1,senderbalance);
    pstmt->setInt(2,accofsender);
    affectedRows = pstmt->executeUpdate();
-   
+
    if (affectedRows != 0){
    pstmt.reset(conn->prepareStatement("INSERT INTO Transaction (user_id,transaction_type,amount) VALUES(?,?,?)"));
    pstmt->setInt(1,accofsender);
@@ -410,21 +406,24 @@ class BankSystem {
    pstmt->setDouble(3,amount);
    affectedRows = pstmt->executeUpdate();
 
-   
+
    std::cout<< (affectedRows !=0? "Done!.\n":"Something went Wrong! recording the transaction.\n") ;
    std::cout << "Paymet  Succeeded!.\n";
    } else {
        std::cout<< "Something went Wrong!.\n" ;
    }
-  
+
   } catch (SQLException & e){
      std::cout<< "Error: " <<  e.what() << std::endl;
-  } 
- 
+  }
+
  return 0;
  }
+ 
 
 
-};
+
+   
+   
 
 #endif
